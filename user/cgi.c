@@ -65,6 +65,8 @@ void ICACHE_FLASH_ATTR tplLed(HttpdConnData *connData, char *token, void **arg) 
 	httpdSend(connData, buff, -1);
 }
 
+
+
 static long hitCounter=0;
 
 //Template code for the counter on the index page.

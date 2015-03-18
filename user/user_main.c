@@ -20,6 +20,11 @@
 #include "cgiwifi.h"
 #include "stdout.h"
 #include "auth.h"
+#include "httpd.h"
+
+#ifndef NULL
+#define NULL   ((void *) 0)
+#endif
 
 //Function that tells the authentication system what users/passwords live on the system.
 //This is disabled in the default build; if you want to try it, enable the authBasic line in

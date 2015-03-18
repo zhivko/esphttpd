@@ -13,14 +13,17 @@ FW_BASE		= firmware
 
 # Base directory for the compiler. Needs a / at the end; if not set it'll use the tools that are in
 # the PATH.
-XTENSA_TOOLS_ROOT ?= 
+XTENSA_TOOLS_ROOT ?= /home/kz/esp8266/esp-open-sdk/xtensa-lx106-elf/bin/
 
 # base directory of the ESP8266 SDK package, absolute
-SDK_BASE	?= /opt/Espressif/ESP8266_SDK
+#SDK_BASE	?= /opt/Espressif/ESP8266_SDK
+SDK_BASE	?= /home/kz/esp8266/esp-open-sdk
 
 #Esptool.py path and port
-ESPTOOL		?= esptool
-ESPPORT		?= /dev/ttyUSB0
+ESPTOOL		?= /home/kz/esp8266/nodemcu-firmware/tools/esptool.py
+#ESPTOOL		?= /home/kz/esp8266/esp-open-sdk/esptool/esptool.py
+
+ESPPORT		?= /dev/ttyUSB2
 #ESPDELAY indicates seconds to wait between flashing the two binary images
 ESPDELAY	?= 3
 ESPBAUD		?= 115200
@@ -51,7 +54,7 @@ LD_SCRIPT	= eagle.app.v6.ld
 
 # various paths from the SDK used in this project
 SDK_LIBDIR	= lib
-SDK_LDDIR	= ld
+SDK_LDDIR	= esp_iot_sdk_v0.9.5/ld
 SDK_INCDIR	= include include/json
 
 # we create two different files for uploading into the flash
@@ -115,11 +118,11 @@ all: checkdirs $(TARGET_OUT) $(FW_FILE_1) $(FW_FILE_2)
 
 $(FW_FILE_1): $(TARGET_OUT) firmware
 	$(vecho) "FW $@"
-	$(Q) $(ESPTOOL) -eo $(TARGET_OUT) $(FW_FILE_1_ARGS)
+	$(Q) $(ESPTOOL) elf2image --output firmware/firmware- $(TARGET_OUT)
 
 $(FW_FILE_2): $(TARGET_OUT) firmware
 	$(vecho) "FW $@"
-	$(Q) $(ESPTOOL) -eo $(TARGET_OUT) $(FW_FILE_2_ARGS)
+	$(Q) $(ESPTOOL) elf2image --output firmware/firmware- $(TARGET_OUT)
 
 $(TARGET_OUT): $(APP_AR)
 	$(vecho) "LD $@"
@@ -138,10 +141,12 @@ firmware:
 	$(Q) mkdir -p $@
 
 flash: $(FW_FILE_1) $(FW_FILE_2)
-	$(Q) $(ESPTOOL) -cp $(ESPPORT) -cb $(ESPBAUD) -ca 0x00000 -cf firmware/0x00000.bin -v
-	$(Q) [ $(ESPDELAY) -ne 0 ] && echo "Please put the ESP in bootloader mode..." || true
-	$(Q) sleep $(ESPDELAY) || true
-	$(Q) $(ESPTOOL) -cp $(ESPPORT) -cb $(ESPBAUD) -ca 0x40000 -cf firmware/0x40000.bin -v
+#	$(Q) $(ESPTOOL) -cp $(ESPPORT) -cb $(ESPBAUD) -ca 0x00000 -cf firmware/0x00000.bin -v
+#	$(Q) [ $(ESPDELAY) -ne 0 ] && echo "Please put the ESP in bootloader mode..." || true
+#	$(Q) sleep $(ESPDELAY) || true
+#	$(Q) $(ESPTOOL) -cp $(ESPPORT) -cb $(ESPBAUD) -ca 0x40000 -cf firmware/0x40000.bin -v
+	$(Q) $(ESPTOOL) -b $(ESPBAUD) -p $(ESPPORT) write_flash 0x00000 firmware/firmware-0x00000.bin 0x40000 firmware/firmware-0x40000.bin
+#~/esp8266/nodemcu-firmware/tools/esptool.py -b 115200 -p /dev/ttyUSB0 write_flash 0x00000 eagle.app.v6.out-0x00000.bin 0x10000 eagle.app.v6.out-0x10000.bin
 
 webpages.espfs: html/ html/wifi/ mkespfsimage/mkespfsimage
 	cd html; find | ../mkespfsimage/mkespfsimage > ../webpages.espfs; cd ..
@@ -151,7 +156,8 @@ mkespfsimage/mkespfsimage: mkespfsimage/
 
 htmlflash: webpages.espfs
 	if [ $$(stat -c '%s' webpages.espfs) -gt $$(( 0x2E000 )) ]; then echo "webpages.espfs too big!"; false; fi
-	$(ESPTOOL) -cp $(ESPPORT) -cb $(ESPBAUD) -ca 0x12000 -cf webpages.espfs -v
+	#$(ESPTOOL) -cp $(ESPPORT) -cb $(ESPBAUD) -ca 0x12000 -cf webpages.espfs -v
+	$(Q) $(ESPTOOL) -b $(ESPBAUD) -p $(ESPPORT) write_flash 0x12000 webpages.espfs
 
 clean:
 	$(Q) rm -f $(APP_AR)
