@@ -4,3 +4,8 @@ environment/project/org.eclipse.linuxtools.cdt.autotools.core.toolChain.12504813
 environment/project/org.eclipse.linuxtools.cdt.autotools.core.toolChain.125048136/PATH/value=/usr/bin\:/home/kz/esp8266/esp-open-sdk/xtensa-lx106-elf/bin\:$PATH
 environment/project/org.eclipse.linuxtools.cdt.autotools.core.toolChain.125048136/append=true
 environment/project/org.eclipse.linuxtools.cdt.autotools.core.toolChain.125048136/appendContributed=true
+environment/project/org.eclipse.linuxtools.cdt.autotools.core.toolChain.547804875/PATH/delimiter=\:
+environment/project/org.eclipse.linuxtools.cdt.autotools.core.toolChain.547804875/PATH/operation=replace
+environment/project/org.eclipse.linuxtools.cdt.autotools.core.toolChain.547804875/PATH/value=/home/klemen/esp8266/esp-open-sdk/xtensa-lx106-elf/bin\:/usr/bin
+environment/project/org.eclipse.linuxtools.cdt.autotools.core.toolChain.547804875/append=true
+environment/project/org.eclipse.linuxtools.cdt.autotools.core.toolChain.547804875/appendContributed=true

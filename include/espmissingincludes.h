@@ -1,14 +1,17 @@
 #ifndef ESPMISSINGINCLUDES_H
 #define ESPMISSINGINCLUDES_H
 
-#include <stdint.h>
-#include <c_types.h>
 #include <ets_sys.h>
+#include <stdint.h>
 
 //Missing function prototypes in include folders. Gcc will warn on these if we don't define 'em anywhere.
 //MOST OF THESE ARE GUESSED! but they seem to swork and shut up the compiler.
 typedef struct espconn espconn;
-
+extern void ets_wdt_enable(void);
+extern void ets_wdt_disable(void);
+extern void wdt_feed (void);
+extern void os_intr_unlock(void);
+extern void os_intr_lock(void);
 int atoi(const char *nptr);
 void ets_install_putc1(void *routine);
 void ets_isr_attach(int intr, void *handler, void *arg);
@@ -43,5 +46,6 @@ uint32 system_get_time();
 int os_random();
 int rand(void);
 void ets_bzero(void *s, size_t n);
-void ets_delay_us(int ms);
+void ets_delay_us(long us);
+
 #endif

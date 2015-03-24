@@ -11,7 +11,7 @@ Cgi/template routines for the /wifi url.
  * ----------------------------------------------------------------------------
  */
 
-
+#include <stdlib.h>
 #include <string.h>
 #include <osapi.h>
 #include "user_interface.h"
@@ -20,6 +20,7 @@ Cgi/template routines for the /wifi url.
 #include "cgi.h"
 #include "io.h"
 #include "espmissingincludes.h"
+#include "config.h"
 
 //Enable this to disallow any changes in AP settings
 //#define DEMO_MODE
@@ -107,7 +108,7 @@ static void ICACHE_FLASH_ATTR wifiStartScan() {
 int ICACHE_FLASH_ATTR cgiWiFiScan(HttpdConnData *connData) {
 	int len;
 	int i;
-	char buff[1024];
+	char buff[512];
 	httpdStartResponse(connData, 200);
 	httpdHeader(connData, "Content-Type", "text/json");
 	httpdEndHeaders(connData);
@@ -170,7 +171,7 @@ static void ICACHE_FLASH_ATTR reassTimerCb(void *arg) {
 		//Schedule disconnect/connect
 		os_timer_disarm(&resetTimer);
 		os_timer_setfn(&resetTimer, resetTimerCb, NULL);
-		os_timer_arm(&resetTimer, 4000, 0);
+		os_timer_arm(&resetTimer, 10000, 0);
 	}
 }
 
@@ -180,7 +181,9 @@ static void ICACHE_FLASH_ATTR reassTimerCb(void *arg) {
 int ICACHE_FLASH_ATTR cgiWiFiConnect(HttpdConnData *connData) {
 	char essid[128];
 	char passwd[128];
+	char buff[128];
 	static ETSTimer reassTimer;
+	int len,gotcmd=0;
 	
 	if (connData->conn==NULL) {
 		//Connection aborted. Clean up.
@@ -194,12 +197,42 @@ int ICACHE_FLASH_ATTR cgiWiFiConnect(HttpdConnData *connData) {
 	os_strncpy((char*)stconf.password, passwd, 64);
 	os_printf("Try to connect to AP %s pw %s\n", essid, passwd);
 
+	os_sprintf((char *)sysCfg.sta_ssid,essid);
+	os_sprintf((char *)sysCfg.sta_pass,passwd);
+
+	len=httpdFindArg(connData->postBuff, "sta-mode", buff, sizeof(buff));
+	if (len>0) {
+		os_sprintf((char *)sysCfg.sta_mode,buff);
+		gotcmd=1;
+	}
+	
+	len=httpdFindArg(connData->postBuff, "sta-ip", buff, sizeof(buff));
+	if (len>0) {
+		os_sprintf((char *)sysCfg.sta_ip,buff);
+		gotcmd=1;
+	}
+
+	len=httpdFindArg(connData->postBuff, "sta-mask", buff, sizeof(buff));
+	if (len>0) {
+		os_sprintf((char *)sysCfg.sta_mask,buff);
+		gotcmd=1;
+	}
+
+	len=httpdFindArg(connData->postBuff, "sta-gw", buff, sizeof(buff));
+	if (len>0) {
+		os_sprintf((char *)sysCfg.sta_gw,buff);
+		gotcmd=1;
+	}
+	
+	if(gotcmd==1) {	
+		CFG_Save();
+	}
 	//Schedule disconnect/connect
 	os_timer_disarm(&reassTimer);
 	os_timer_setfn(&reassTimer, reassTimerCb, NULL);
 //Set to 0 if you want to disable the actual reconnecting bit
 #ifdef DEMO_MODE
-	httpdRedirect(connData, "/wifi");
+	httpdRedirect(connData, "/config/wifi");
 #else
 	os_timer_arm(&reassTimer, 1000, 0);
 	httpdRedirect(connData, "connecting.html");
@@ -211,7 +244,7 @@ int ICACHE_FLASH_ATTR cgiWiFiConnect(HttpdConnData *connData) {
 //given ESSID using the given password.
 int ICACHE_FLASH_ATTR cgiWifiSetMode(HttpdConnData *connData) {
 	int len;
-	char buff[1024];
+	char buff[128];
 	
 	if (connData->conn==NULL) {
 		//Connection aborted. Clean up.
@@ -226,13 +259,13 @@ int ICACHE_FLASH_ATTR cgiWifiSetMode(HttpdConnData *connData) {
 		system_restart();
 #endif
 	}
-	httpdRedirect(connData, "/wifi");
+	httpdRedirect(connData, "/config/wifi");
 	return HTTPD_CGI_DONE;
 }
 
 //Template code for the WLAN page.
 void ICACHE_FLASH_ATTR tplWlan(HttpdConnData *connData, char *token, void **arg) {
-	char buff[1024];
+	char buff[512];
 	int x;
 	static struct station_config stconf;
 	if (token==NULL) return;
@@ -255,7 +288,26 @@ void ICACHE_FLASH_ATTR tplWlan(HttpdConnData *connData, char *token, void **arg)
 		} else {
 			os_strcpy(buff, "Click <a href=\"setmode.cgi?mode=2\">here</a> to go to standalone AP mode.");
 		}
-	}
+	} else if (os_strcmp(token, "IPAddress")==0) {
+        struct ip_info pTempIp;
+		wifi_get_ip_info(0x00, &pTempIp);
+        os_sprintf(buff, "%d.%d.%d.%d\r\n",IP2STR(&pTempIp.ip));
+	} else if (os_strcmp(token, "selecteddhcp")==0) {
+	    if(os_strcmp((char *)sysCfg.sta_mode, "dhcp")==0) {
+			os_strcpy(buff, "selected = \"selected\"");
+		} else os_strcpy(buff, " ");
+	} else if (os_strcmp(token, "selectedstatic")==0) {
+	    if(os_strcmp((char *)sysCfg.sta_mode, "static")==0) {
+			os_strcpy(buff, "selected = \"selected\"");
+		} else os_strcpy(buff, " ");
+	} else if (os_strcmp(token, "sta-ip")==0) {
+		os_strcpy(buff, (char *)sysCfg.sta_ip);
+	} else if (os_strcmp(token, "sta-mask")==0) {
+        os_strcpy(buff, (char *)sysCfg.sta_mask);
+	} else if (os_strcmp(token, "sta-gw")==0) {
+		os_strcpy(buff, (char *)sysCfg.sta_gw);
+    }
+
 	httpdSend(connData, buff, -1);
 }
 

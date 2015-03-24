@@ -25,9 +25,19 @@
 	</natures>
 	<linkedResources>
 		<link>
+			<name>esp-open-sdk_include</name>
+			<type>2</type>
+			<location>/home/klemen/esp8266/esp-open-sdk/esp_iot_sdk_v0.9.5/include</location>
+		</link>
+		<link>
 			<name>esp8266_include</name>
 			<type>2</type>
 			<location>/home/kz/esp8266/esp-open-sdk/esp_iot_sdk_v0.9.5/include</location>
+		</link>
+		<link>
+			<name>esp_open_sdk</name>
+			<type>2</type>
+			<location>/home/klemen/esp8266/esp-open-sdk/esp_iot_sdk_v0.9.5/include</location>
 		</link>
 	</linkedResources>
 </projectDescription>

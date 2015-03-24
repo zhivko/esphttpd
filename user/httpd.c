@@ -28,7 +28,7 @@ Esp8266 http server - core routines
 //Max length of request head
 #define MAX_HEAD_LEN 1024
 //Max amount of connections
-#define MAX_CONN 8
+#define MAX_CONN 4
 //Max post buffer len
 #define MAX_POST 1024
 //Max send buffer len
@@ -61,16 +61,26 @@ typedef struct {
 	const char *mimetype;
 } MimeMap;
 
+#ifdef GZIP_COMPRESSION
+static const char * gzippedFileTypes[] = {
+	"js",
+	"html",
+	"css",
+	NULL
+};
+#endif
+
 //The mappings from file extensions to mime types. If you need an extra mime type,
 //add it here.
 static const MimeMap mimeTypes[]={
 	{"htm", "text/htm"},
 	{"html", "text/html"},
-	{"css", "text/css"},
 	{"js", "text/javascript"},
+	{"css", "text/css"},
 	{"txt", "text/plain"},
 	{"jpg", "image/jpeg"},
 	{"jpeg", "image/jpeg"},
+	{"ico", "image/ico"},
 	{"png", "image/png"},
 	{NULL, "text/html"}, //default value
 };
@@ -87,6 +97,26 @@ const char ICACHE_FLASH_ATTR *httpdGetMimetype(char *url) {
 	while (mimeTypes[i].ext!=NULL && os_strcmp(ext, mimeTypes[i].ext)!=0) i++;
 	return mimeTypes[i].mimetype;
 }
+
+#ifdef GZIP_COMPRESSION
+// Sends Content-encoding: gzip header if the requested file was GZIP compressed
+void sendEncodingHeader(HttpdConnData *connData) {
+	int i=0;
+	//Go find the extension
+	char *ext=connData->url+(strlen(connData->url)-1);
+	while (ext!=connData->url && *ext!='.') ext--;
+	if (*ext=='.') ext++;
+	
+	//ToDo: os_strcmp is case sensitive; we may want to do case-intensive matching here...
+	while (gzippedFileTypes[i]!=NULL) {
+		if (os_strcmp(ext, gzippedFileTypes[i])==0) {
+			httpdHeader(connData, "Content-Encoding", "gzip");
+			return;
+		}
+		i++;
+	}
+}
+#endif
 
 //Looks up the connData info for a specific esp connection
 static HttpdConnData ICACHE_FLASH_ATTR *httpdFindConnData(void *arg) {
@@ -107,7 +137,7 @@ static void ICACHE_FLASH_ATTR httpdRetireConn(HttpdConnData *conn) {
 }
 
 //Stupid li'l helper function that returns the value of a hex char.
-static int httpdHexVal(char c) {
+static int ICACHE_FLASH_ATTR httpdHexVal(char c) {
 	if (c>='0' && c<='9') return c-'0';
 	if (c>='A' && c<='F') return c-'A'+10;
 	if (c>='a' && c<='f') return c-'a'+10;
@@ -118,7 +148,7 @@ static int httpdHexVal(char c) {
 //Takes the valLen bytes stored in val, and converts it into at most retLen bytes that
 //are stored in the ret buffer. Returns the actual amount of bytes used in ret. Also
 //zero-terminates the ret buffer.
-int httpdUrlDecode(char *val, int valLen, char *ret, int retLen) {
+int ICACHE_FLASH_ATTR httpdUrlDecode(char *val, int valLen, char *ret, int retLen) {
 	int s=0, d=0;
 	int esced=0, escVal=0;
 	while (s<valLen && d<retLen) {
@@ -152,18 +182,18 @@ int ICACHE_FLASH_ATTR httpdFindArg(char *line, char *arg, char *buff, int buffLe
 	if (line==NULL) return 0;
 	p=line;
 	while(p!=NULL && *p!='\n' && *p!='\r' && *p!=0) {
-		os_printf("findArg: %s\n", p);
+		//os_printf("findArg: %s\n", p);
 		if (os_strncmp(p, arg, os_strlen(arg))==0 && p[strlen(arg)]=='=') {
 			p+=os_strlen(arg)+1; //move p to start of value
 			e=(char*)os_strstr(p, "&");
 			if (e==NULL) e=p+os_strlen(p);
-			os_printf("findArg: val %s len %d\n", p, (e-p));
+			//os_printf("findArg: val %s len %d\n", p, (e-p));
 			return httpdUrlDecode(p, (e-p), buff, buffLen);
 		}
 		p=(char*)os_strstr(p, "&");
 		if (p!=NULL) p+=1;
 	}
-	os_printf("Finding %s in %s: Not found :/\n", arg, line);
+	//os_printf("Finding %s in %s: Not found :/\n", arg, line);
 	return -1; //not found
 }
 

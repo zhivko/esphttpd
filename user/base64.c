@@ -1,13 +1,15 @@
 /* base64.c : base-64 / MIME encode/decode */
 /* PUBLIC DOMAIN - Jon Mayo - November 13, 2003 */
+#include "espmissingincludes.h"
 #include "c_types.h"
 #include <stdio.h>
 #include <stdint.h>
 #include <stdlib.h>
 #include <ctype.h>
 #include "base64.h"
+#include "user_config.h"
 
-static const uint8_t base64dec_tab[256]= {
+static const uint8_t ICACHE_STORE_ATTR ICACHE_RODATA_ATTR base64dec_tab[256]= {
 	255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,
 	255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,
 	255,255,255,255,255,255,255,255,255,255,255, 62,255,255,255, 63,
@@ -26,6 +28,17 @@ static const uint8_t base64dec_tab[256]= {
 	255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,
 };
 
+static uint8_t byte_of_aligned_array(const uint8_t* aligned_array, uint32_t index)
+{
+    if( (((uint32_t)aligned_array)%4) != 0 ){
+        os_printf("aligned_array is not 4-byte aligned.\n");
+        return 0;
+    }
+    uint32_t v = ((uint32_t *)aligned_array)[ index/4 ];
+    uint8_t *p = (uint8_t *) (&v);
+    return p[ (index%4) ];
+}
+
 #if 0
 static int ICACHE_FLASH_ATTR base64decode(const char in[4], char out[3]) {
 	uint8_t v[4];
@@ -43,7 +56,7 @@ static int ICACHE_FLASH_ATTR base64decode(const char in[4], char out[3]) {
 #endif
 
 /* decode a base64 string in one shot */
-int ICACHE_FLASH_ATTR base64_decode(size_t in_len, const char *in, size_t out_len, unsigned char *out) {
+int ICACHE_FLASH_ATTR base64_decode2(size_t in_len, const char *in, size_t out_len, unsigned char *out) {
 	unsigned int ii, io;
 	uint32_t v;
 	unsigned int rem;
@@ -52,7 +65,7 @@ int ICACHE_FLASH_ATTR base64_decode(size_t in_len, const char *in, size_t out_le
 		unsigned char ch;
 		if(isspace((int)in[ii])) continue;
 		if(in[ii]=='=') break; /* stop at = */
-		ch=base64dec_tab[(unsigned int)in[ii]];
+		ch=byte_of_aligned_array(base64dec_tab,(unsigned int)in[ii]);
 		if(ch==255) break; /* stop at a parse error */
 		v=(v<<6)|ch;
 		rem+=6;

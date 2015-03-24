@@ -13,17 +13,22 @@ FW_BASE		= firmware
 
 # Base directory for the compiler. Needs a / at the end; if not set it'll use the tools that are in
 # the PATH.
-XTENSA_TOOLS_ROOT ?= /home/kz/esp8266/esp-open-sdk/xtensa-lx106-elf/bin/
+XTENSA_TOOLS_ROOT ?= /home/klemen/esp8266/esp-open-sdk/xtensa-lx106-elf/bin/
+
+#Extra Tensilica includes from the ESS VM
+SDK_EXTRA_INCLUDES ?= /home/klemen/esp8266/esp-open-sdk/sdk/include
+SDK_EXTRA_LIBS ?= /home/klemen/esp8266/esp-open-sdk/xtensa-lx106-elf/xtensa-lx106-elf/lib/
+
 
 # base directory of the ESP8266 SDK package, absolute
 #SDK_BASE	?= /opt/Espressif/ESP8266_SDK
-SDK_BASE	?= /home/kz/esp8266/esp-open-sdk
+SDK_BASE	?= /home/klemen/esp8266/esp-open-sdk
 
 #Esptool.py path and port
-ESPTOOL		?= /home/kz/esp8266/nodemcu-firmware/tools/esptool.py
+ESPTOOL		?= /home/klemen/esp8266/nodemcu-firmware/tools/esptool.py
 #ESPTOOL		?= /home/kz/esp8266/esp-open-sdk/esptool/esptool.py
 
-ESPPORT		?= /dev/ttyUSB2
+ESPPORT		?= /dev/ttyUSB0
 #ESPDELAY indicates seconds to wait between flashing the two binary images
 ESPDELAY	?= 3
 ESPBAUD		?= 115200
@@ -36,7 +41,9 @@ TARGET		= httpd
 MODULES		= driver user
 EXTRA_INCDIR	= include \
 		. \
-		lib/heatshrink/
+		lib/heatshrink/ \
+		$(SDK_EXTRA_INCLUDES)
+		
 
 # libraries used in this project, mainly provided by the SDK
 LIBS		= c gcc hal phy pp net80211 wpa main lwip
@@ -47,7 +54,7 @@ CFLAGS		= -Os -ggdb -std=c99 -Werror -Wpointer-arith -Wundef -Wall -Wl,-EL -fno-
 		-Wno-address
 
 # linker flags used to generate the main object file
-LDFLAGS		= -nostdlib -Wl,--no-check-sections -u call_user_start -Wl,-static
+LDFLAGS		= -nostdlib -Wl,--no-check-sections -u call_user_start -Wl,-static -L$(SDK_EXTRA_LIBS)
 
 # linker script used for the above linkier step
 LD_SCRIPT	= eagle.app.v6.ld
