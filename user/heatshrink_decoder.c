@@ -13,6 +13,7 @@
 #include "mem.h"
 #include "osapi.h"
 #include "heatshrink_config_httpd.h"
+#define malloc(x) os_malloc(x)
 #define memset(x,y,z) os_memset(x,y,z)
 #define memcpy(x,y,z) os_memcpy(x,y,z)
 #include "../lib/heatshrink/heatshrink_decoder.c"

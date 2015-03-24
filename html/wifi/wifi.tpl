@@ -1,5 +1,5 @@
 <html><head><title>WiFi connection</title>
-<link rel="stylesheet" type="text/css" href="style.css">
+<link rel="stylesheet" type="text/css" href="../style.css">
 <script type="text/javascript" src="140medley.min.js"></script>
 <script type="text/javascript">
 
@@ -10,16 +10,6 @@ function createInputForAp(ap) {
 	if (ap.essid=="" && ap.rssi==0) return;
 	var div=document.createElement("div");
 	div.id="apdiv";
-	var rssi=document.createElement("div");
-	var rssiVal=-Math.floor(ap.rssi/51)*32;
-	rssi.className="icon";
-	rssi.style.backgroundPosition="0px "+rssiVal+"px";
-	var encrypt=document.createElement("div");
-	var encVal="-64"; //assume wpa/wpa2
-	if (ap.enc=="0") encVal="0"; //open
-	if (ap.enc=="1") encVal="-32"; //wep
-	encrypt.className="icon";
-	encrypt.style.backgroundPosition="-32px "+encVal+"px";
 	var input=document.createElement("input");
 	input.type="radio";
 	input.name="essid";
@@ -28,10 +18,8 @@ function createInputForAp(ap) {
 	input.id="opt-"+ap.essid;
 	var label=document.createElement("label");
 	label.htmlFor="opt-"+ap.essid;
-	label.textContent=ap.essid;
+	label.textContent=ap.essid+" (rssi "+ap.rssi+")";
 	div.appendChild(input);
-	div.appendChild(rssi);
-	div.appendChild(encrypt);
 	div.appendChild(label);
 	return div;
 }
@@ -78,7 +66,7 @@ window.onload=function(e) {
 Current WiFi mode: %WiFiMode%
 </p>
 <p>
-Note: %WiFiapwarn%
+Current IP: %IPAddress%
 </p>
 <form name="wifiform" action="connect.cgi" method="post">
 <p>

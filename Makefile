@@ -8,6 +8,7 @@
 #
 # Output directors to store intermediate compiled files
 # relative to the project directory
+
 BUILD_BASE	= build
 FW_BASE		= firmware
 
@@ -46,12 +47,21 @@ EXTRA_INCDIR	= include \
 		
 
 # libraries used in this project, mainly provided by the SDK
-LIBS		= c gcc hal phy pp net80211 wpa main lwip
+#LIBS		= c gcc hal phy pp net80211 wpa main lwip
+
+# compiler flags using during compilation of source files
+#CFLAGS		= -Os -ggdb -std=c99 -Werror -Wpointer-arith -Wundef -Wall -Wl,-EL -fno-inline-functions \
+#		-nostdlib -mlongcalls -mtext-section-literals  -D__ets__ -DICACHE_FLASH \
+#		-Wno-address -Werror=implicit-function-declaration -Wno-unused
+
+# libraries used in this project, mainly provided by the SDK
+LIBS		= c gcc hal phy net80211 lwip wpa main
 
 # compiler flags using during compilation of source files
 CFLAGS		= -Os -ggdb -std=c99 -Werror -Wpointer-arith -Wundef -Wall -Wl,-EL -fno-inline-functions \
-		-nostdlib -mlongcalls -mtext-section-literals  -D__ets__ -DICACHE_FLASH \
-		-Wno-address
+				-nostdlib -mlongcalls -mtext-section-literals  -D__ets__ -DICACHE_FLASH \
+				-Wno-address -Werror=implicit-function-declaration -Wno-unused
+
 
 # linker flags used to generate the main object file
 LDFLAGS		= -nostdlib -Wl,--no-check-sections -u call_user_start -Wl,-static -L$(SDK_EXTRA_LIBS)
